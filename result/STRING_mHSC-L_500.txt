@@ -1,0 +1,8 @@
+epoch 1, Val Loss 0.6894, Val Auc 0.9527, Val AUPR 0.7500 
+epoch 1, Test Loss 0.6889, Test Auc 0.9244, Test AUPR 0.7500 
+epoch 16, Val Loss 0.6822, Val Auc 0.9586, Val AUPR 0.7600 
+epoch 16, Test Loss 0.6814, Test Auc 0.9156, Test AUPR 0.7586 
+epoch 17, Val Loss 0.6819, Val Auc 0.9645, Val AUPR 0.7600 
+epoch 17, Test Loss 0.6810, Test Auc 0.9200, Test AUPR 0.7586 
+Best Model Result: 
+epoch 17, Test Loss 0.6810, Test Auc 0.9200, Test AUPR 0.7586 
