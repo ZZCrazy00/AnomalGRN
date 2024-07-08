@@ -20,7 +20,7 @@ def setup_seed(seed):
 
 
 def load_data(data_type, data_name, gene_top):
-    file_path = f"../Data/{data_type} Dataset/{data_name}/TFs+{gene_top}"
+    file_path = f"Data/{data_type} Dataset/{data_name}/TFs+{gene_top}"
     data = pd.read_csv(f"{file_path}/BL--ExpressionData.csv", index_col=0)
     edge = pd.read_csv(f"{file_path}/BL--network.csv")[["Gene1", 'Gene2']].values.tolist()
     return data, edge
@@ -31,7 +31,7 @@ def create_negative_samples(edge, gene_list, feature, neg_ratio):
     count = 0
     for a, b in edge:
         count += 1
-        new_node.append(feature[gene_list.index(a)] + feature[gene_list.index(b)] + [1])
+        new_node.append(feature[gene_list.index(a)] + feature[gene_list.index(b)])
         label.append(1)
         for i in range(neg_ratio):
             count += 1
@@ -39,32 +39,32 @@ def create_negative_samples(edge, gene_list, feature, neg_ratio):
                 x = np.random.randint(len(gene_list))
                 y = np.random.randint(len(gene_list))
                 if x != y and [x, y] not in edge:
-                    new_node.append(feature[x] + feature[y] + [0])
+                    new_node.append(feature[x] + feature[y])
                     label.append(0)
                     break
     return new_node, label
 
 
 def get_data(arg):
-    print('加载数据集:')
+    print('get dataset:{} {} {}'.format(arg.dataset_type, arg.dataset_name, arg.top))
     data, edge = load_data(arg.dataset_type, arg.dataset_name, arg.top)
     print(len(data), len(edge))
 
     gene_list = data.index.tolist()
-    feature = data.values.tolist()
+    feature = data.values
     random.shuffle(edge)
 
-    ratio = 1
+    ratio = arg.ratio
     new_node, label = create_negative_samples(edge, gene_list, feature, neg_ratio=ratio)
 
     num_data = len(edge)
-    train_num, val_num, test_num = [int(num_data * frac) * 2 for frac in [0.8, 0.1, 0.1]]
+    train_num, val_num, test_num = [int(num_data * frac) * (ratio+1) for frac in [0.6, 0.2, 0.2]]
     train_num = int(train_num)
 
-    print("共有节点：", len(new_node), "负样本比例：", ratio)
+    print("sum node：", len(new_node), "negative ratio：", ratio)
     print(train_num, val_num, test_num)
 
-    train_mask = torch.zeros(len(label), dtype=bool)
+    train_mask = np.zeros(len(label), dtype=bool)
     train_mask[:train_num] = True
     val_mask = np.zeros(len(label), dtype=bool)
     val_mask[train_num: train_num + val_num] = True
@@ -76,11 +76,11 @@ def get_data(arg):
     new_node = torch.tensor(new_node).cuda()
     label = torch.tensor(label).cuda()
 
-    print('开始使用knn计算初始边：')
+    print('run KNN')
     knn_g = dgl.knn_graph(new_node, 5, algorithm='bruteforce-sharemem', dist='cosine', exclude_self=False)
     edge_index = torch.LongTensor(np.concatenate([[knn_g.edges()[0].tolist()], [knn_g.edges()[1].tolist()]], axis=0))
 
-    # # attack 比例
+    # # attack ratio
     # a = 0.1
     # num_edges = edge_index.size(1)
     # num_edges_to_remove = int(num_edges * a)
@@ -101,7 +101,7 @@ def get_data(arg):
 
     data = Data(x=new_node, edge_index=edge_index, y=label, train_mask=train_mask, val_mask=val_mask,
                 test_mask=test_mask)
-    print('计算完毕！', data)
+    print(data)
 
     graph = dgl.graph((data.edge_index[0], data.edge_index[1]))
     graph.ndata['feature'] = data.x.cpu()
