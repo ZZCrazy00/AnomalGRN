@@ -3,7 +3,6 @@ import torch
 import random
 import numpy as np
 import pandas as pd
-import scipy.sparse as sp
 import torch.nn.functional as F
 from collections import namedtuple
 from torch_geometric.data import Data
