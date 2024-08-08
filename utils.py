@@ -107,19 +107,10 @@ def get_data(arg):
     graph.ndata['feature'] = data.x.cpu()
     graph.ndata['label'] = data.y.type(torch.LongTensor).cpu()
     train_mask, val_mask, test_mask = data['train_mask'], data['val_mask'], data['test_mask']
-    graph.ndata['feature'] = torch.tensor(normalize_features(graph.ndata['feature']), dtype=torch.float)
+    graph.ndata['feature'] = torch.tensor(graph.ndata['feature'], dtype=torch.float)
 
     return graph.ndata['feature'], graph.ndata['feature'].size()[-1], graph.ndata['label'], \
            train_mask, val_mask, test_mask, graph
-
-
-def normalize_features(mx):
-    rowsum = np.array(mx.sum(1)) + 0.01
-    r_inv = np.power(rowsum, -1).flatten()
-    r_inv[np.isinf(r_inv)] = 0
-    r_mat_inv = sp.diags(r_inv)
-    mx = r_mat_inv.dot(mx)
-    return mx
 
 
 def normalize(adj):
